@@ -4,7 +4,7 @@ import { regularAST, multipleDeclarationsAST, nestedTemplateAST, exportedCompone
 
 describe("#convertASTtoCSS", () => {
   it("should generate valid CSS from correct AST input", () => {
-    const result = convertASTtoCSS(regularAST)
+    const result = convertASTtoCSS([regularAST])
     expect(result).toEqual(
       expect.arrayContaining([
         {
@@ -20,19 +20,19 @@ describe("#convertASTtoCSS", () => {
   })
 
   it("should throw an error when AST input is empty", () => {
-    const input = ""
+    const input = []
 
     expect(() => convertASTtoCSS(input)).toThrowError("Provided input is empty!")
   })
 
-  it("should throw an error when AST input is empty", () => {
-    const input = "test"
+  it("should throw an error when AST input is not valid", () => {
+    const input = ["test"]
 
-    expect(() => convertASTtoCSS(input)).toThrowError("Provided input is not valid AST!")
+    expect(() => convertASTtoCSS(input)).toThrowError("Provided input is not valid AST! It's probably because you already have Git Conflicts syntax in that file")
   })
 
   it("should generate valid CSS from AST input with multiple tagged template expressions", () => {
-    const result = convertASTtoCSS(multipleDeclarationsAST)
+    const result = convertASTtoCSS([multipleDeclarationsAST])
 
     expect(result).toEqual(
       expect.arrayContaining([
@@ -62,7 +62,7 @@ describe("#convertASTtoCSS", () => {
   })
 
   it("should generate valid CSS from AST input with nested tagged template expressions", () => {
-    const result = convertASTtoCSS(nestedTemplateAST)
+    const result = convertASTtoCSS([nestedTemplateAST])
 
     expect(result).toEqual(
       expect.arrayContaining([
@@ -92,7 +92,7 @@ describe("#convertASTtoCSS", () => {
   })
 
   it("should compile when styled component is exported", () => {
-    const result = convertASTtoCSS(exportedComponentsAST)
+    const result = convertASTtoCSS([exportedComponentsAST])
 
     console.log(JSON.stringify(result, null, 2))
 
@@ -163,6 +163,206 @@ describe("#convertASTtoCSS", () => {
               },
             },
           ],
+        },
+      ])
+    )
+  })
+
+  it("should generate valid CSS from multiple AST inputs", () => {
+    const result = convertASTtoCSS([regularAST, multipleDeclarationsAST])
+
+    expect(result).toEqual(
+      expect.arrayContaining([
+        {
+          componentName: "Button",
+          tagName: "button",
+          staticStyles:
+            "{  background: white; color: palevioletred; font-size: 1em; &:hover { background: palevioletred; color: white; }   }",
+          dynamicStyles: "{  }",
+          usedIn: [],
+        },
+        {
+          componentName: "Button",
+          tagName: "button",
+          staticStyles: "{  color: blue }",
+          dynamicStyles: "{  }",
+          usedIn: [],
+        },
+        {
+          componentName: "RedButton",
+          tagName: "div",
+          staticStyles: "{  color: red }",
+          dynamicStyles: "{  }",
+          usedIn: [],
+        },
+        {
+          componentName: "GreenButton",
+          tagName: "div",
+          staticStyles: "{  color: green }",
+          dynamicStyles: "{  }",
+          usedIn: [],
+        },
+      ])
+    )
+  })
+
+  it("should generate valid CSS from multiple AST inputs with separate style files", () => {
+    const componentAST = {
+      type: "File",
+      program: {
+        type: "Program",
+        body: [
+          {
+            type: "ImportDeclaration",
+            specifiers: [
+              {
+                type: "ImportDefaultSpecifier",
+                local: {
+                  type: "Identifier",
+                  name: "styled",
+                },
+              },
+            ],
+            source: {
+              type: "StringLiteral",
+              value: "styled-components",
+            },
+          },
+          {
+            type: "VariableDeclaration",
+            declarations: [
+              {
+                type: "VariableDeclarator",
+                id: {
+                  type: "Identifier",
+                  name: "Button",
+                },
+                init: {
+                  type: "TaggedTemplateExpression",
+                  tag: {
+                    type: "MemberExpression",
+                    object: {
+                      type: "Identifier",
+                      name: "styled",
+                    },
+                    property: {
+                      type: "Identifier",
+                      name: "button",
+                    },
+                  },
+                  quasi: {
+                    type: "TemplateLiteral",
+                    quasis: [
+                      {
+                        type: "TemplateElement",
+                        value: {
+                          raw: "\n  background: white;\n  color: palevioletred;\n  font-size: 1em;\n  &:hover {\n    background: palevioletred;\n    color: white;\n  }\n",
+                          cooked: "\n  background: white;\n  color: palevioletred;\n  font-size: 1em;\n  &:hover {\n    background: palevioletred;\n    color: white;\n  }\n",
+                        },
+                        tail: true,
+                      },
+                    ],
+                    expressions: [],
+                  },
+                },
+              },
+            ],
+            kind: "const",
+          },
+        ],
+        directives: [],
+        sourceType: "module",
+      },
+      comments: [],
+    }
+
+    const styleAST = {
+      type: "File",
+      program: {
+        type: "Program",
+        body: [
+          {
+            type: "ImportDeclaration",
+            specifiers: [
+              {
+                type: "ImportDefaultSpecifier",
+                local: {
+                  type: "Identifier",
+                  name: "styled",
+                },
+              },
+            ],
+            source: {
+              type: "StringLiteral",
+              value: "styled-components",
+            },
+          },
+          {
+            type: "VariableDeclaration",
+            declarations: [
+              {
+                type: "VariableDeclarator",
+                id: {
+                  type: "Identifier",
+                  name: "ButtonStyles",
+                },
+                init: {
+                  type: "TaggedTemplateExpression",
+                  tag: {
+                    type: "MemberExpression",
+                    object: {
+                      type: "Identifier",
+                      name: "styled",
+                    },
+                    property: {
+                      type: "Identifier",
+                      name: "button",
+                    },
+                  },
+                  quasi: {
+                    type: "TemplateLiteral",
+                    quasis: [
+                      {
+                        type: "TemplateElement",
+                        value: {
+                          raw: "\n  padding: 0.25em 1em;\n  border: 2px solid palevioletred;\n  border-radius: 3px;\n",
+                          cooked: "\n  padding: 0.25em 1em;\n  border: 2px solid palevioletred;\n  border-radius: 3px;\n",
+                        },
+                        tail: true,
+                      },
+                    ],
+                    expressions: [],
+                  },
+                },
+              },
+            ],
+            kind: "const",
+          },
+        ],
+        directives: [],
+        sourceType: "module",
+      },
+      comments: [],
+    }
+
+    const result = convertASTtoCSS([componentAST, styleAST])
+
+    expect(result).toEqual(
+      expect.arrayContaining([
+        {
+          componentName: "Button",
+          tagName: "button",
+          staticStyles:
+            "{  background: white; color: palevioletred; font-size: 1em; &:hover { background: palevioletred; color: white; }   }",
+          dynamicStyles: "{  }",
+          usedIn: [],
+        },
+        {
+          componentName: "ButtonStyles",
+          tagName: "button",
+          staticStyles: "{  padding: 0.25em 1em; border: 2px solid palevioletred; border-radius: 3px; }",
+          dynamicStyles: "{  }",
+          usedIn: [],
         },
       ])
     )

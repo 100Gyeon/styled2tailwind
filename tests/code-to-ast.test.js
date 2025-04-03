@@ -16,7 +16,7 @@ describe("#generateAst", () => {
       \`
     `
 
-    expect(findPropertyByValue(generateAst(input), "type", "TemplateElement")).toBeTruthy()
+    expect(findPropertyByValue(generateAst([input]), "type", "TemplateElement")).toBeTruthy()
   })
 
   it("should contain properties that are equal to the input code", () => {
@@ -31,7 +31,7 @@ describe("#generateAst", () => {
       \`
     `
 
-    const result = findPropertyByValue(generateAst(input), "value", {
+    const result = findPropertyByValue(generateAst([input]), "value", {
       raw: "\nbackground: white;\n color: palevioletred;\nfont-size: 1em;\npadding: 0.25em 1em;\nborder: 2px solid palevioletred;\nborder-radius: 3px;\n",
       cooked:
         "\nbackground: white;\ncolor: palevioletred;\nfont-size: 1em;\npadding: 0.25em 1em;\nborder: 2px solid palevioletred;\nborder-radius: 3px;\n",
@@ -43,8 +43,8 @@ describe("#generateAst", () => {
   it("should throw an error if the input is empty", () => {
     const input = ""
 
-    expect(() => generateAst(input)).toThrowError(/^Provided input is empty$/)
-    expect(() => generateAst(input)).not.toThrowError(/^Any other error/)
+    expect(() => generateAst([input])).toThrowError(/^Provided input is empty$/)
+    expect(() => generateAst([input])).not.toThrowError(/^Any other error/)
   })
 
   it("should throw an error if the input is not valid JavaScript code", () => {
@@ -61,7 +61,7 @@ describe("#generateAst", () => {
       \`
     `
 
-    expect(() => generateAst(input)).toThrowError(/^Input is not valid JavaScript code/)
+    expect(() => generateAst([input])).toThrowError(/^Input is not valid JavaScript code/)
   })
 
   it("should transform styled-component CSS interpolation into AST", () => {
@@ -76,11 +76,81 @@ describe("#generateAst", () => {
       \`
     `
 
-    const ast = generateAst(input)
+    const ast = generateAst([input])
 
     expect(findPropertyByValue(ast, "type", "TemplateElement")).toBeTruthy()
     expect(findPropertyByValue(ast, "value", { raw: "\nbackground:", cooked: "\nbackground:" })).toBeTruthy()
     expect(findPropertyByValue(ast, "type", "Identifier")).toBeTruthy()
     expect(findPropertyByValue(ast, "name", "props")).toBeTruthy()
+  })
+
+  it("should merge multiple code inputs into a single AST", () => {
+    const input1 = `
+      import styled from 'styled-components'
+      const Button = styled.button\`
+        background: white;
+        color: palevioletred;
+        font-size: 1em;
+        padding: 0.25em 1em;
+        border: 2px solid palevioletred;
+        border-radius: 3px;
+      \`
+    `
+
+    const input2 = `
+      import styled from 'styled-components'
+      const Link = styled.a\`
+        color: blue;
+        text-decoration: none;
+        &:hover {
+          text-decoration: underline;
+        }
+      \`
+    `
+
+    const ast = generateAst([input1, input2])
+
+    expect(findPropertyByValue(ast, "type", "TemplateElement")).toBeTruthy()
+    expect(findPropertyByValue(ast, "value", { raw: "\nbackground:", cooked: "\nbackground:" })).toBeTruthy()
+    expect(findPropertyByValue(ast, "type", "Identifier")).toBeTruthy()
+    expect(findPropertyByValue(ast, "name", "props")).toBeTruthy()
+    expect(findPropertyByValue(ast, "type", "TemplateElement")).toBeTruthy()
+    expect(findPropertyByValue(ast, "value", { raw: "\ncolor:", cooked: "\ncolor:" })).toBeTruthy()
+    expect(findPropertyByValue(ast, "type", "Identifier")).toBeTruthy()
+    expect(findPropertyByValue(ast, "name", "styled")).toBeTruthy()
+  })
+
+  it("should generate valid AST from multiple code inputs with separate style files", () => {
+    const input1 = `
+      import styled from 'styled-components'
+      const Button = styled.button\`
+        background: white;
+        color: palevioletred;
+        font-size: 1em;
+        padding: 0.25em 1em;
+        border: 2px solid palevioletred;
+        border-radius: 3px;
+      \`
+    `
+
+    const input2 = `
+      import styled from 'styled-components'
+      const ButtonStyles = styled.button\`
+        padding: 0.25em 1em;
+        border: 2px solid palevioletred;
+        border-radius: 3px;
+      \`
+    `
+
+    const ast = generateAst([input1, input2])
+
+    expect(findPropertyByValue(ast, "type", "TemplateElement")).toBeTruthy()
+    expect(findPropertyByValue(ast, "value", { raw: "\nbackground:", cooked: "\nbackground:" })).toBeTruthy()
+    expect(findPropertyByValue(ast, "type", "Identifier")).toBeTruthy()
+    expect(findPropertyByValue(ast, "name", "props")).toBeTruthy()
+    expect(findPropertyByValue(ast, "type", "TemplateElement")).toBeTruthy()
+    expect(findPropertyByValue(ast, "value", { raw: "\npadding:", cooked: "\npadding:" })).toBeTruthy()
+    expect(findPropertyByValue(ast, "type", "Identifier")).toBeTruthy()
+    expect(findPropertyByValue(ast, "name", "styled")).toBeTruthy()
   })
 })
