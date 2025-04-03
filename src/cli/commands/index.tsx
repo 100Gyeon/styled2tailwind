@@ -72,7 +72,13 @@ export default function Index({ args, options }: Props) {
         )
         setFilesToConvert((prev) => ({ ...prev, [file]: { ...prev[file], isConverting: true } }))
 
-        const ast = generateAst(testFileContent)
+        const styleFile = file.replace(/\.tsx$/, ".styles.ts")
+        let styleFileContent = ""
+        if (fs.existsSync(styleFile)) {
+          styleFileContent = fs.readFileSync(styleFile, "utf-8")
+        }
+
+        const ast = generateAst([testFileContent, styleFileContent])
         const styledComponents = convertASTtoCSS(ast)
         const tailwind = convertCSStoTailwind(styledComponents)
 
