@@ -79,7 +79,7 @@ export default function Index({ args, options }: Props) {
         }
 
         const ast = generateAst([testFileContent, styleFileContent])
-        const styledComponents = convertASTtoCSS(ast)
+        const styledComponents = convertASTtoCSS([ast])
         const tailwind = convertCSStoTailwind(styledComponents)
 
         const tailwindOutput = []

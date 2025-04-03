@@ -1,6 +1,6 @@
 {
-  "name": "styled2tailwind",
-  "version": "1.0.0",
+  "name": "jiyeon-styled2tailwind",
+  "version": "1.0.1",
   "type": "module",
   "bin": {
     "styled2tailwind": "dist/cli/index.js"
